@@ -1,6 +1,4 @@
 import pygame, sys, time
-#import spritesheet
-from SpritesheetAnim import SpriteStripAnim
 
 pygame.init()
 
@@ -10,8 +8,6 @@ gameSideMargin = 0
 gameTopMargin = 0
 gameBottomMargin = 150
 gameBorderWidth = 0
-
-AREA = windowWidth * windowHeight
 
 
 wallTop = gameTopMargin + gameBorderWidth
@@ -34,17 +30,12 @@ titleFont = pygame.font.SysFont('Pixel Digivolve', 25, False)
 clock = pygame.time.Clock()
 
 
-
-CENTER_HANDLE = 0
-
 index = 0
 
 
 backgroundImg1 = pygame.image.load("graphics/Meadow.png")
 backgroundImg2 = pygame.image.load("graphics/Grassland.png")
-playerImg = pygame.image.load("MetalGreymon_stand1.png")
-menuBorder = pygame.image.load("graphics/menuBorder.gif")
-menuBorder = pygame.transform.scale(menuBorder, (800, 150))
+playerImg = pygame.image.load("MetalGreymon_sheet.png")
 
 class GameObject:
     def __init__(self, xcor, ycor, image):
@@ -59,33 +50,24 @@ class GameObject:
 class Digimon(GameObject):
     def __init__(self, xcor, ycor, image):
         super().__init__(xcor, ycor, image)
-        self.direction = 0
-        self.score = 0
         self.level = 0
         self.isAlive = True
 
     def show(self):
         gameDisplay.blit(playerImg, (self.xcor, self.ycor))
 
-class spritesheet:
-    def __init__(self, filename, cols, rows):
-        self.sheet = pygame.image.load(filename)
+class obj_Spritesheet:
+    def __init__(self, file_name):
+        self.sprite_sheet = pygame.image.load(file_name).conver()
+        self.tiledicts = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
 
-        self.cols = cols
-        self.rows = rows
-        self.totalCellCount = cols*rows
+    def get_image(self, column, row, width = 64, height = 64, scale = None):
+        image = pygame.surface([width, height]).conver()
+        image.blit(self.sprite_sheet, (0, 0), (self.tiledict[column]*width, row*height, width, height))
+        
+    
 
-        self.rect = self.sheet.get_rect()
-        w = self.cellWidth = self.rect.width / cols
-        h = self.cellHeight = self.rect.height / rows
-        hw, hh = self.cellCenter = (w / 2, h / 2)
-
-        self.cells = list([(index % cols * w, index / cols * h)for index in range(self.totalCellCount)])
-        self.handle = list([(0, 0), (-hw, 0), (-w, 0), (0, -hh), (-hw, -hh), (-w, -hh), (0, -h), (-hw, -h), (-w, -h)])
-
-    def draw(self, surface, cellIndex, x, y, handle = 0):
-        surface.blit(self.sheet, (x + self.handle[handle][0], y + self.handle[handle][1]))
-ss = spritesheet('MetalGreymon_sheet.png',4,1)
+#ss = spritesheet('MetalGreymon_sheet.png',4,1)
 player = Digimon(windowWidth / 2 - playerImg.get_width() / 2, wallBottom - playerImg.get_height(), playerImg)
 
 isRunning = True
@@ -97,7 +79,7 @@ while isRunning:
         if event.type == pygame.QUIT:
             isRunning = False
 
-    #LOGIC
+    # LOGIC
 
     # RENDER GRAPHICS
     gameDisplay.blit(gameDisplay, (0, 0))
@@ -108,14 +90,10 @@ while isRunning:
 
     gameDisplay.blit(backgroundImg1, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
     gameDisplay.blit(backgroundImg2, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
-    gameDisplay.blit(menuBorder, (wallLeft, wallTop + 450), (0, 0, gameWidth, gameHeight))
-
+    
+    player.show()
     # animate sprites
-    ss.draw(gameDisplay, index % ss.totalCellCount, windowWidth / 2, windowHeight / 2, CENTER_HANDLE)
-    index += 1
-
-    pygame.draw.circle(gameDisplay, white, ((windowWidth // 2), (windowHeight // 2)), 2, 0)
-
+    
     
     clock.tick()
     pygame.display.update()
