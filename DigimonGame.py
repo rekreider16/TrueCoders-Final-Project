@@ -25,50 +25,59 @@ blue = (4, 49, 89)
 gameDisplay = pygame.display.set_mode((windowWidth, windowHeight))
 pygame.display.set_caption('Digimon RPG')
 
-titleFont = pygame.font.SysFont('Pixel Digivolve', 25, False)
+titleFont = pygame.font.SysFont('Pixel Digivolve', 35, False)
 
 clock = pygame.time.Clock()
 
 
-index = 0
-
-
 backgroundImg1 = pygame.image.load("graphics/Meadow.png")
 backgroundImg2 = pygame.image.load("graphics/Grassland.png")
-playerImg = pygame.image.load("MetalGreymon_sheet.png")
+playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand1.png")
+enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand1.png")
+battleFPS = 0
 
-class GameObject:
-    def __init__(self, xcor, ycor, image):
+class Cursor():
+    def __init__(self, xcor, ycor)
         self.xcor = xcor
         self.ycor = ycor
+    def show(self):
+        
+
+
+class Digimon:
+    def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
+        self.xcor = xcor
+        self.ycor = ycor
+        self.health = health
+        self.attack = attack
+        self.defense = defense
         self.img = image
         self.width = image.get_width()
         self.height = image.get_height()
     def show(self):
         gameDisplay.blit(self.img, (self.xcor, self.ycor))
 
-class Digimon(GameObject):
-    def __init__(self, xcor, ycor, image):
-        super().__init__(xcor, ycor, image)
-        self.level = 0
+class Player(Digimon):
+    def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
+        super().__init__(xcor, ycor, health, attack, defense, image)
+        self.level = 1
         self.isAlive = True
 
     def show(self):
         gameDisplay.blit(playerImg, (self.xcor, self.ycor))
 
-class obj_Spritesheet:
-    def __init__(self, file_name):
-        self.sprite_sheet = pygame.image.load(file_name).conver()
-        self.tiledicts = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+class Enemy(Digimon):
+    def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
+        super().__init__(xcor, ycor, health, attack, defense, image)
+        self.level = 1
+        self.isAlive = True
 
-    def get_image(self, column, row, width = 64, height = 64, scale = None):
-        image = pygame.surface([width, height]).conver()
-        image.blit(self.sprite_sheet, (0, 0), (self.tiledict[column]*width, row*height, width, height))
-        
-    
+    def show(self):
+        gameDisplay.blit(enemyImg, (self.xcor, self.ycor))
 
-#ss = spritesheet('MetalGreymon_sheet.png',4,1)
-player = Digimon(windowWidth / 2 - playerImg.get_width() / 2, wallBottom - playerImg.get_height(), playerImg)
+enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 4, 4, enemyImg)
+player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 5, 3, playerImg)
+
 
 isRunning = True
 
@@ -90,10 +99,28 @@ while isRunning:
 
     gameDisplay.blit(backgroundImg1, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
     gameDisplay.blit(backgroundImg2, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
+    titleText1 = titleFont.render('FIGHT', False, white)
+    titleText2 = titleFont.render('ITEMS', False, white)
+    titleText3 = titleFont.render('FLEE!!', False, white)
+    gameDisplay.blit(titleText1, ((gameSideMargin + 675), (gameTopMargin + 455), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
+    gameDisplay.blit(titleText2, ((gameSideMargin + 675), (gameTopMargin + 495), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
+    gameDisplay.blit(titleText3, ((gameSideMargin + 675), (gameTopMargin + 535), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
     
-    player.show()
-    # animate sprites
-    
+    # Battle
+    if(battleFPS <= 10):
+        playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand1.png")
+        enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand1.png")
+        player.show()
+        enemy.show()
+        battleFPS += 1
+    elif(battleFPS >= 11):
+        playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand2.png")
+        enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand2.png")
+        player.show()
+        enemy.show()
+        battleFPS += 1
+        if(battleFPS == 20):
+            battleFPS = 0
     
     clock.tick()
     pygame.display.update()
