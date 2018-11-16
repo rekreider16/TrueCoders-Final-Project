@@ -1,4 +1,5 @@
 import pygame, sys, time
+import random
 
 pygame.init()
 
@@ -14,35 +15,56 @@ wallTop = gameTopMargin + gameBorderWidth
 wallLeft = gameSideMargin + gameBorderWidth
 wallRight = windowWidth - gameSideMargin - gameBorderWidth
 wallBottom = windowHeight - gameBottomMargin - gameBorderWidth
-
+cursorStart_X = 615
+cursorStart_Y = 448
 
 black = (0,0,0)
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (4, 49, 89)
+yellow = (255, 201, 15)
 
 gameDisplay = pygame.display.set_mode((windowWidth, windowHeight))
 pygame.display.set_caption('Digimon RPG')
 
 titleFont = pygame.font.SysFont('Pixel Digivolve', 35, False)
+monsterFont = pygame.font.SysFont('Pixel Digivolve', 15, False)
 
 clock = pygame.time.Clock()
 
-
+cursorImg = pygame.image.load("cursor.png")
 backgroundImg1 = pygame.image.load("graphics/Meadow.png")
 backgroundImg2 = pygame.image.load("graphics/Grassland.png")
 playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand1.png")
 enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand1.png")
+bulletImg = pygame.image.load("MetalGreymon_individual/projectile.png")
+enemyBulletImg = pygame.image.load("SkullGreymon_individual/enemy_projectile.png")
+attackSound = pygame.mixer.Sound("se_attack.wav")
 battleFPS = 0
 
 class Cursor():
-    def __init__(self, xcor, ycor)
+    def __init__(self, xcor, ycor):
+        self.location = 0
         self.xcor = xcor
         self.ycor = ycor
     def show(self):
+        gameDisplay.blit(cursorImg, (self.xcor, self.ycor))
+    def moveDown(self):
+        self.location = 1
+    def moveUp(self):
+        self.location = -1
         
+def isCollision(a, b):
+    if a.xcor + a.width > b.xcor and a.xcor < b.xcor + b.width \
+    and a.ycor + a.height > b.ycor and a.ycor < b.ycor + b.height:
+        return True
+    else:
+        return False
 
+def randomNumber():
+    x = (player.attack * 4 - enemy.defense * 2) / random.randint(2, 4)
+    return x
 
 class Digimon:
     def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
@@ -61,26 +83,54 @@ class Player(Digimon):
     def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
         super().__init__(xcor, ycor, health, attack, defense, image)
         self.level = 1
+        self.health = 100
         self.isAlive = True
 
     def show(self):
         gameDisplay.blit(playerImg, (self.xcor, self.ycor))
+    def attacking(self):
+        attackSound.play()
+        newAttack = Attack(self.xcor + self.width / 2 - bulletImg.get_width() / 2, self.ycor, bulletImg, 17)
+        attacks.append(newAttack)
 
 class Enemy(Digimon):
     def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
         super().__init__(xcor, ycor, health, attack, defense, image)
         self.level = 1
+        self.health = 100
         self.isAlive = True
 
     def show(self):
         gameDisplay.blit(enemyImg, (self.xcor, self.ycor))
+    def attacking(self):
+        attackSound.play()
+        newAttack = Attack(self.xcor + self.width / 2 - enemyBulletImg.get_width() / 2, self.ycor, enemyBulletImg, -17)
+        enemyAttacks.append(newAttack)
 
-enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 4, 4, enemyImg)
-player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 5, 3, playerImg)
+class Attack:
+    def __init__(self, xcor, ycor, image, speed):
+        self.xcor = xcor
+        self.ycor = ycor
+        self.width = image.get_width()
+        self.height = image.get_height()
+        self.image = image
+        self.speed = speed
+    def show(self):
+        gameDisplay.blit(self.image, (self.xcor, self.ycor))
+    def move(self):
+        self.xcor -= self.speed
 
+enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 23, 24, enemyImg)
+player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 24, 23, playerImg)
+
+attacks = []
+enemyAttacks = []
 
 isRunning = True
-
+isPlayerAttacking = False
+attackAnimPlayer = False
+isEnemyDamaged = False
+isPlayerDamaged= False
 
 # MAIN LOOP
 while isRunning:
@@ -88,42 +138,203 @@ while isRunning:
         if event.type == pygame.QUIT:
             isRunning = False
 
-    # LOGIC
+    # Key commands
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                if(cursorStart_Y == 528):
+                    cursorStart_Y -= 80
+                else:
+                    cursorStart_Y += 40
+            elif event.key == pygame.K_UP:
+                if(cursorStart_Y == 448):
+                    cursorStart_Y += 80
+                else:
+                    cursorStart_Y -= 40
+            elif event.key == pygame.K_SPACE:
+                if(cursorStart_Y == 448):
+                    player.attacking()
+                    cursorStart_Y = 0
+                    isPlayerAttacking = True
+                    attackAnimPlayer = True
+                    break
+                else:
+                    pass
 
+    playerDamage = randomNumber()
+
+    for attack in attacks:
+        attack.move()
+
+    for attack in attacks:
+        if attack.xcor < wallLeft:
+            try:
+                attacks.remove(attack)
+            except ValueError:
+                pass
+            break
+        if isCollision(enemy, attack):
+            try:
+                enemy.health -= playerDamage
+                cursorStart_Y = 448
+                isEnemyDamaged = True
+                enemy.attacking()
+            except ValueError:
+                pass
+            try:
+                attacks.remove(attack)
+            except ValueError:
+                pass
+            break
+        elif attack.xcor < wallTop:
+            attacks.remove(attack)
+            break
+
+    
+
+    for attack in enemyAttacks:
+        attack.move()
+
+    if(isPlayerAttacking == True):
+        for attack in enemyAttacks:
+            if attack.xcor > wallRight:
+                try:
+                    enemyAttacks.remove(attack)
+                except ValueError:
+                    pass
+                break
+            if isCollision(player, attack):
+                try:
+                    player.health -= enemy.attack - player.defense
+                    cursorStart_Y = 448
+                    isPlayerDamaged = True
+                    isPlayerAttacking = False
+                except ValueError:
+                    pass
+                try:
+                    enemyAttacks.remove(attack)
+                except ValueError:
+                    pass
+                break
+            elif attack.xcor > wallRight:
+                enemyAttacks.remove(attack)
+                break
+        
     # RENDER GRAPHICS
     gameDisplay.blit(gameDisplay, (0, 0))
     gameWidth = wallRight - wallLeft
     gameHeight = wallBottom - wallTop
     gameDisplay.fill((black))
-    pygame.draw.rect(gameDisplay, blue, (gameSideMargin, (gameTopMargin + 450), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
+    pygame.draw.rect(gameDisplay, blue, (gameSideMargin, 450, windowWidth, windowHeight - gameBottomMargin))
+    damageTotalEnemy = titleFont.render(str(playerDamage), False, white)
+    damageTotalPlayer = titleFont.render(str(enemy.attack - player.defense), False, white)
 
     gameDisplay.blit(backgroundImg1, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
     gameDisplay.blit(backgroundImg2, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
-    titleText1 = titleFont.render('FIGHT', False, white)
-    titleText2 = titleFont.render('ITEMS', False, white)
-    titleText3 = titleFont.render('FLEE!!', False, white)
-    gameDisplay.blit(titleText1, ((gameSideMargin + 675), (gameTopMargin + 455), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
-    gameDisplay.blit(titleText2, ((gameSideMargin + 675), (gameTopMargin + 495), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
-    gameDisplay.blit(titleText3, ((gameSideMargin + 675), (gameTopMargin + 535), windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin - gameTopMargin))
+
+    if(isPlayerAttacking == False):
+        titleText1 = titleFont.render('FIGHT', False, white)
+        titleText2 = titleFont.render('ITEMS', False, white)
+        titleText3 = titleFont.render('FLEE!!', False, white)
+        gameDisplay.blit(titleText1, (675, 455, windowWidth, windowHeight - gameBottomMargin))
+        gameDisplay.blit(titleText2, (675, 495, windowWidth, windowHeight - gameBottomMargin))
+        gameDisplay.blit(titleText3, (675, 535, windowWidth, windowHeight - gameBottomMargin))
     
-    # Battle
+    # Move cursor
+        gameDisplay.blit(cursorImg, (cursorStart_X, cursorStart_Y, windowWidth, windowHeight - gameBottomMargin))
+
+    # Enemy Stats
+    enemyHealth = monsterFont.render('SkullGreymon   lv: ' + str(enemy.level), False, white)
+    gameDisplay.blit(enemyHealth, (5, 453, windowWidth - gameSideMargin * 2, windowHeight - gameBottomMargin))
+    if(enemy.health >= 65):
+        pygame.draw.rect(gameDisplay, white, (5, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (7, 475, 200, 10))
+        pygame.draw.rect(gameDisplay, green, (7, 475, enemy.health * 2, 10))
+    elif(enemy.health < 65 and enemy.health > 25):
+        pygame.draw.rect(gameDisplay, white, (5, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (7, 475, 200, 10))
+        pygame.draw.rect(gameDisplay, yellow, (7, 475, enemy.health * 2, 10))
+    elif(enemy.health > 0 and enemy.health < 25):
+        pygame.draw.rect(gameDisplay, white, (5, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (7,475, 200, 10))
+        pygame.draw.rect(gameDisplay, red, (7, 475, enemy.health * 2, 10))
+    else:
+        pygame.draw.rect(gameDisplay, white, (5, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (7, 475, 200, 10))
+
+    # Player Stats
+    playerHealth = monsterFont.render('MetalGreymon   lv: ' + str(player.level), False, white)
+    gameDisplay.blit(playerHealth, (305, 453, windowWidth, windowHeight - gameBottomMargin))
+    if(player.health >= 65):
+        pygame.draw.rect(gameDisplay, white, (305, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (307, 475, 200, 10))
+        pygame.draw.rect(gameDisplay, green, (307, 475, player.health * 2, 10))
+    elif(player.health < 65 and player.health > 25):
+        pygame.draw.rect(gameDisplay, white, (305, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (307, 475, 200, 10))
+        pygame.draw.rect(gameDisplay, yellow, (307, 475, player.health * 2, 10))
+    elif(player.health >= 0 and player.health < 25):
+        pygame.draw.rect(gameDisplay, white, (305, 473, 204, 14))
+        pygame.draw.rect(gameDisplay, blue, (307, 475, 200, 10))
+        pygame.draw.rect(gameDisplay, red, (307, 475, player.health * 2, 10))
+   
+    # Battle Animations
+    for attack in attacks:
+        attack.show()
+
+    for attack in enemyAttacks:
+        attack.show()
+
     if(battleFPS <= 10):
-        playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand1.png")
-        enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand1.png")
+        if(attackAnimPlayer == True):
+            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_attack.png")
+        else:
+            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand1.png")
+        if(isPlayerDamaged == True):
+            gameDisplay.blit(damageTotalPlayer, (windowWidth / playerImg.get_width() * 49, wallBottom - playerImg.get_height() * 2.75))
+            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_damage.png")
         player.show()
+    elif(battleFPS >= 11):
+        if(attackAnimPlayer == True):
+            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_attack.png")
+            if(player.health < 30):
+                playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_damage.png")
+            attackAnimPlayer = False
+        else:
+            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand2.png")
+        if(isPlayerDamaged == True):
+            gameDisplay.blit(damageTotalPlayer, (windowWidth / playerImg.get_width() * 49, wallBottom - playerImg.get_height() * 2.75))
+            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_damage.png")
+        player.show()
+
+    if(battleFPS <= 10):
+        if(enemy.health <= 0):
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_damage.png")
+            enemy.health = 0
+        else:
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand1.png")
+        if(isEnemyDamaged == True): 
+            gameDisplay.blit(damageTotalEnemy, (windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2.75))
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_damage.png")
         enemy.show()
         battleFPS += 1
     elif(battleFPS >= 11):
-        playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand2.png")
-        enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand2.png")
-        player.show()
+        if(enemy.health < 30):
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_damage.png")
+        else:
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand2.png")
+        if(isEnemyDamaged == True):
+            gameDisplay.blit(damageTotalEnemy, (windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2.75))
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_damage.png")
+        if(battleFPS == 20 and isEnemyDamaged == True):
+            enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand2.png") 
         enemy.show()
         battleFPS += 1
-        if(battleFPS == 20):
-            battleFPS = 0
+    if(battleFPS == 20):
+        battleFPS = 0
+        isEnemyDamaged = False
+        isPlayerDamaged = False
     
     clock.tick()
     pygame.display.update()
-
 
 pygame.quit
