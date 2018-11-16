@@ -28,8 +28,8 @@ yellow = (255, 201, 15)
 gameDisplay = pygame.display.set_mode((windowWidth, windowHeight))
 pygame.display.set_caption('Digimon RPG')
 
-titleFont = pygame.font.SysFont('Pixel Digivolve', 35, False)
-monsterFont = pygame.font.SysFont('Pixel Digivolve', 15, False)
+titleFont = pygame.font.Font('Pixel Digivolve.otf', 35)
+monsterFont = pygame.font.Font('Pixel Digivolve.otf', 15)
 
 clock = pygame.time.Clock()
 
@@ -61,10 +61,6 @@ def isCollision(a, b):
         return True
     else:
         return False
-
-def randomNumber():
-    x = (player.attack * 4 - enemy.defense * 2) / random.randint(2, 4)
-    return x
 
 class Digimon:
     def __init__(self, xcor, ycor, health: int, attack: int, defense: int, image):
@@ -120,17 +116,20 @@ class Attack:
     def move(self):
         self.xcor -= self.speed
 
-enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 23, 24, enemyImg)
-player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 24, 23, playerImg)
+enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 33, 14, enemyImg)
+player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 24, 13, playerImg)
 
 attacks = []
 enemyAttacks = []
 
 isRunning = True
 isPlayerAttacking = False
+menuSelect = False
 attackAnimPlayer = False
 isEnemyDamaged = False
 isPlayerDamaged= False
+
+hp_Disk_Count = 10
 
 # MAIN LOOP
 while isRunning:
@@ -153,14 +152,17 @@ while isRunning:
             elif event.key == pygame.K_SPACE:
                 if(cursorStart_Y == 448):
                     player.attacking()
-                    cursorStart_Y = 0
+                    cursorStart_Y = 0 
+                    menuSelect = True
                     isPlayerAttacking = True
                     attackAnimPlayer = True
                     break
+                elif(cursorStart_Y == 488):
+                    menuSelect = True
+                    cursorStart_Y = 0
+                    break
                 else:
                     pass
-
-    playerDamage = randomNumber()
 
     for attack in attacks:
         attack.move()
@@ -174,7 +176,7 @@ while isRunning:
             break
         if isCollision(enemy, attack):
             try:
-                enemy.health -= playerDamage
+                enemy.health -= player.attack - enemy.defense
                 cursorStart_Y = 448
                 isEnemyDamaged = True
                 enemy.attacking()
@@ -188,8 +190,6 @@ while isRunning:
         elif attack.xcor < wallTop:
             attacks.remove(attack)
             break
-
-    
 
     for attack in enemyAttacks:
         attack.move()
@@ -208,6 +208,7 @@ while isRunning:
                     cursorStart_Y = 448
                     isPlayerDamaged = True
                     isPlayerAttacking = False
+                    menuSelect = False
                 except ValueError:
                     pass
                 try:
@@ -225,13 +226,13 @@ while isRunning:
     gameHeight = wallBottom - wallTop
     gameDisplay.fill((black))
     pygame.draw.rect(gameDisplay, blue, (gameSideMargin, 450, windowWidth, windowHeight - gameBottomMargin))
-    damageTotalEnemy = titleFont.render(str(playerDamage), False, white)
+    damageTotalEnemy = titleFont.render(str(player.attack - enemy.defense), False, white)
     damageTotalPlayer = titleFont.render(str(enemy.attack - player.defense), False, white)
 
     gameDisplay.blit(backgroundImg1, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
     gameDisplay.blit(backgroundImg2, (wallLeft, wallTop), (0, 0, gameWidth, gameHeight))
 
-    if(isPlayerAttacking == False):
+    if(menuSelect == False):
         titleText1 = titleFont.render('FIGHT', False, white)
         titleText2 = titleFont.render('ITEMS', False, white)
         titleText3 = titleFont.render('FLEE!!', False, white)
@@ -334,7 +335,7 @@ while isRunning:
         isEnemyDamaged = False
         isPlayerDamaged = False
     
-    clock.tick()
+    clock.tick(30)
     pygame.display.update()
 
 pygame.quit
