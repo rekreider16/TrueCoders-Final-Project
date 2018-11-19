@@ -162,7 +162,8 @@ while isRunning:
                 elif(cursorStart_Y == 488):
                     player.health = 100
                     isPlayerAttacking = True
-                    enemy.attacking()
+                    if (enemy.health <= 10):
+                        enemy.attacking()
                     break
                 else:
                     pass
@@ -257,7 +258,7 @@ while isRunning:
         pygame.draw.rect(gameDisplay, white, (5, 473, 204, 14))
         pygame.draw.rect(gameDisplay, blue, (7, 475, 200, 10))
         pygame.draw.rect(gameDisplay, yellow, (7, 475, enemy.health * 2, 10))
-    elif(enemy.health > 0 and enemy.health < 25):
+    elif(enemy.health > 0 and enemy.health <= 25):
         pygame.draw.rect(gameDisplay, white, (5, 473, 204, 14))
         pygame.draw.rect(gameDisplay, blue, (7,475, 200, 10))
         pygame.draw.rect(gameDisplay, red, (7, 475, enemy.health * 2, 10))
@@ -276,7 +277,7 @@ while isRunning:
         pygame.draw.rect(gameDisplay, white, (305, 473, 204, 14))
         pygame.draw.rect(gameDisplay, blue, (307, 475, 200, 10))
         pygame.draw.rect(gameDisplay, yellow, (307, 475, player.health * 2, 10))
-    elif(player.health >= 0 and player.health < 25):
+    elif(player.health >= 0 and player.health <= 25):
         pygame.draw.rect(gameDisplay, white, (305, 473, 204, 14))
         pygame.draw.rect(gameDisplay, blue, (307, 475, 200, 10))
         pygame.draw.rect(gameDisplay, red, (307, 475, player.health * 2, 10))
@@ -341,7 +342,7 @@ while isRunning:
         isEnemyDamaged = False
         isPlayerDamaged = False
     
-    clock.tick(30)
+    clock.tick()
     pygame.display.update()
 
 pygame.quit
