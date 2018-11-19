@@ -28,8 +28,8 @@ yellow = (255, 201, 15)
 gameDisplay = pygame.display.set_mode((windowWidth, windowHeight))
 pygame.display.set_caption('Digimon RPG')
 
-titleFont = pygame.font.Font('Pixel Digivolve.otf', 35)
-monsterFont = pygame.font.Font('Pixel Digivolve.otf', 15)
+titleFont = pygame.font.SysFont('Pixel Digivolve', 35, False)
+monsterFont = pygame.font.SysFont('Pixel Digivolve', 15, False)
 
 clock = pygame.time.Clock()
 
@@ -41,6 +41,8 @@ enemyImg = pygame.image.load("SkullGreymon_individual/SkullGreymon_stand1.png")
 bulletImg = pygame.image.load("MetalGreymon_individual/projectile.png")
 enemyBulletImg = pygame.image.load("SkullGreymon_individual/enemy_projectile.png")
 attackSound = pygame.mixer.Sound("se_attack.wav")
+pygame.mixer.music.load("Digimon_World_2-Boss_Battle_www.mp3")
+pygame.mixer.music.play(-1)
 battleFPS = 0
 
 class Cursor():
@@ -116,8 +118,8 @@ class Attack:
     def move(self):
         self.xcor -= self.speed
 
-enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 33, 14, enemyImg)
-player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 24, 13, playerImg)
+enemy = Enemy(windowWidth / enemyImg.get_width() * 9, wallBottom - enemyImg.get_height() * 2, 100, 38, 14, enemyImg)
+player = Player(windowWidth - playerImg.get_width() * 3, wallBottom - playerImg.get_height() * 2, 100, 29, 13, playerImg)
 
 attacks = []
 enemyAttacks = []
@@ -158,8 +160,9 @@ while isRunning:
                     attackAnimPlayer = True
                     break
                 elif(cursorStart_Y == 488):
-                    menuSelect = True
-                    cursorStart_Y = 0
+                    player.health = 100
+                    isPlayerAttacking = True
+                    enemy.attacking()
                     break
                 else:
                     pass
@@ -301,7 +304,10 @@ while isRunning:
                 playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_damage.png")
             attackAnimPlayer = False
         else:
-            playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand2.png")
+            if(player.health < 30):
+                playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_damage.png")
+            else:
+                playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_stand2.png")
         if(isPlayerDamaged == True):
             gameDisplay.blit(damageTotalPlayer, (windowWidth / playerImg.get_width() * 49, wallBottom - playerImg.get_height() * 2.75))
             playerImg = pygame.image.load("MetalGreymon_individual/MetalGreymon_damage.png")
