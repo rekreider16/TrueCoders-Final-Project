@@ -28,8 +28,8 @@ yellow = (255, 201, 15)
 gameDisplay = pygame.display.set_mode((windowWidth, windowHeight))
 pygame.display.set_caption('Digimon RPG')
 
-titleFont = pygame.font.SysFont('Pixel Digivolve', 35, False)
-monsterFont = pygame.font.SysFont('Pixel Digivolve', 15, False)
+titleFont = pygame.font.Font('Pixel Digivolve.otf', 35)
+monsterFont = pygame.font.Font('Pixel Digivolve.otf', 15)
 
 clock = pygame.time.Clock()
 
@@ -342,7 +342,7 @@ while isRunning:
         isEnemyDamaged = False
         isPlayerDamaged = False
     
-    clock.tick()
+    clock.tick(30)
     pygame.display.update()
 
 pygame.quit
